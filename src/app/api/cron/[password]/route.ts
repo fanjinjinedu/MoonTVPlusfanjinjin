@@ -137,6 +137,19 @@ async function refreshRecordAndFavorites() {
     if (process.env.USERNAME && !users.includes(process.env.USERNAME)) {
       users.push(process.env.USERNAME);
     }
+
+    // 环境变量控制是否跳过特定源（默认为 false，即默认跳过）
+    const includeSpecialSources = process.env.CRON_INCLUDE_SPECIAL_SOURCES === 'true';
+
+    // 检查是否应该跳过该源
+    const shouldSkipSource = (source: string): boolean => {
+      if (includeSpecialSources) {
+        return false; // 如果开启了包含特殊源，则不跳过任何源
+      }
+      // 默认跳过 emby 开头、openlist、xiaoya 和 live 开头的源
+      return source.startsWith('emby') || source === 'openlist' || source === 'xiaoya' || source.startsWith('live');
+    };
+
     // 函数级缓存：key 为 `${source}+${id}`，值为 Promise<VideoDetail | null>
     const detailCache = new Map<string, Promise<SearchResult | null>>();
 
@@ -183,6 +196,13 @@ async function refreshRecordAndFavorites() {
             const [source, id] = key.split('+');
             if (!source || !id) {
               console.warn(`跳过无效的播放记录键: ${key}`);
+              continue;
+            }
+
+            // 检查是否应该跳过该源
+            if (shouldSkipSource(source)) {
+              console.log(`跳过播放记录 (源被过滤): ${key}`);
+              processedRecords++;
               continue;
             }
 
@@ -239,6 +259,13 @@ async function refreshRecordAndFavorites() {
             const [source, id] = key.split('+');
             if (!source || !id) {
               console.warn(`跳过无效的收藏键: ${key}`);
+              continue;
+            }
+
+            // 检查是否应该跳过该源
+            if (shouldSkipSource(source)) {
+              console.log(`跳过收藏 (源被过滤): ${key}`);
+              processedFavorites++;
               continue;
             }
 
