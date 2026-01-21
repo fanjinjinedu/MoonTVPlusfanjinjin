@@ -653,18 +653,6 @@ function PlayPageClient() {
         if (cachedData && cachedData.comments.length > 0) {
           console.log(`[弹幕] 使用缓存: title="${title}", episodeIndex=${episodeIndex}, 数量=${cachedData.comments.length}`);
 
-          // 如果缓存中有元信息，更新当前选择状态
-          if (cachedData.metadata) {
-            setCurrentDanmakuSelection({
-              animeId: cachedData.metadata.animeId || 0,
-              episodeId: cachedData.metadata.episodeId || 0,
-              animeTitle: cachedData.metadata.animeTitle || '',
-              episodeTitle: cachedData.metadata.episodeTitle || '',
-              searchKeyword: cachedData.metadata.searchKeyword,
-              danmakuCount: cachedData.metadata.danmakuCount || cachedData.comments.length,
-            });
-          }
-
           // 如果弹幕插件还未初始化，等待初始化
           if (!danmakuPluginRef.current) {
             console.log('[弹幕] 弹幕插件未初始化，等待初始化...');
@@ -708,6 +696,7 @@ function PlayPageClient() {
 
           // 应用弹幕数量限制
           const maxCount = typeof window !== 'undefined' ? parseInt(localStorage.getItem('danmakuMaxCount') || '0', 10) : 0;
+          let calculatedOriginalCount = 0;
           if (maxCount > 0 && danmakuData.length > maxCount) {
             const originalCount = danmakuData.length;
             const step = danmakuData.length / maxCount;
@@ -716,9 +705,11 @@ function PlayPageClient() {
               limitedData.push(danmakuData[Math.floor(i * step)]);
             }
             danmakuData = limitedData;
+            calculatedOriginalCount = originalCount;
             setDanmakuOriginalCount(originalCount);
             console.log(`弹幕数量限制: 原始 ${originalCount} 条，限制到 ${danmakuData.length} 条`);
           } else {
+            // 没有应用限制，不显示原始数量
             setDanmakuOriginalCount(0);
           }
 
@@ -744,6 +735,19 @@ function PlayPageClient() {
 
           setDanmakuCount(danmakuData.length);
           console.log(`[弹幕] 缓存加载成功，共 ${danmakuData.length} 条`);
+
+          // 更新当前选择状态（使用实时计算的数量）
+          if (cachedData.metadata) {
+            setCurrentDanmakuSelection({
+              animeId: cachedData.metadata.animeId || 0,
+              episodeId: cachedData.metadata.episodeId || 0,
+              animeTitle: cachedData.metadata.animeTitle || '',
+              episodeTitle: cachedData.metadata.episodeTitle || '',
+              searchKeyword: cachedData.metadata.searchKeyword,
+              danmakuCount: danmakuData.length,
+              danmakuOriginalCount: calculatedOriginalCount > 0 ? calculatedOriginalCount : undefined,
+            });
+          }
 
           await new Promise((resolve) => setTimeout(resolve, 1500));
           setDanmakuLoading(false);
@@ -3621,6 +3625,7 @@ function PlayPageClient() {
 
       // 应用弹幕数量限制
       const maxCount = typeof window !== 'undefined' ? parseInt(localStorage.getItem('danmakuMaxCount') || '0', 10) : 0;
+      let calculatedOriginalCount = 0;
       if (maxCount > 0 && danmakuData.length > maxCount) {
         const originalCount = danmakuData.length;
         const step = danmakuData.length / maxCount;
@@ -3629,6 +3634,7 @@ function PlayPageClient() {
           limitedData.push(danmakuData[Math.floor(i * step)]);
         }
         danmakuData = limitedData;
+        calculatedOriginalCount = originalCount;
         setDanmakuOriginalCount(originalCount);
         console.log(`弹幕数量限制: 原始 ${originalCount} 条，限制到 ${danmakuData.length} 条`);
       } else {
@@ -3667,7 +3673,7 @@ function PlayPageClient() {
           episodeTitle: metadata.episodeTitle || '',
           searchKeyword: metadata.searchKeyword,
           danmakuCount: danmakuData.length,
-          danmakuOriginalCount: danmakuOriginalCount > 0 ? danmakuOriginalCount : undefined,
+          danmakuOriginalCount: calculatedOriginalCount > 0 ? calculatedOriginalCount : undefined,
         });
       }
 
@@ -4048,18 +4054,6 @@ function PlayPageClient() {
       if (cachedData && cachedData.comments.length > 0) {
         console.log(`[弹幕] 使用缓存: title="${title}", episodeIndex=${currentEpisodeIndex}, 数量=${cachedData.comments.length}`);
 
-        // 如果缓存中有元信息，更新当前选择状态
-        if (cachedData.metadata) {
-          setCurrentDanmakuSelection({
-            animeId: cachedData.metadata.animeId || 0,
-            episodeId: cachedData.metadata.episodeId || 0,
-            animeTitle: cachedData.metadata.animeTitle || '',
-            episodeTitle: cachedData.metadata.episodeTitle || '',
-            searchKeyword: cachedData.metadata.searchKeyword,
-            danmakuCount: cachedData.metadata.danmakuCount || cachedData.comments.length,
-          });
-        }
-
         // 直接加载缓存的弹幕，不需要调用 API
         if (!danmakuPluginRef.current) {
           console.warn('弹幕插件未初始化');
@@ -4102,6 +4096,7 @@ function PlayPageClient() {
 
         // 应用弹幕数量限制
         const maxCount = typeof window !== 'undefined' ? parseInt(localStorage.getItem('danmakuMaxCount') || '0', 10) : 0;
+        let calculatedOriginalCount = 0;
         if (maxCount > 0 && danmakuData.length > maxCount) {
           const originalCount = danmakuData.length;
           const step = danmakuData.length / maxCount;
@@ -4110,9 +4105,11 @@ function PlayPageClient() {
             limitedData.push(danmakuData[Math.floor(i * step)]);
           }
           danmakuData = limitedData;
+          calculatedOriginalCount = originalCount;
           setDanmakuOriginalCount(originalCount);
           console.log(`弹幕数量限制: 原始 ${originalCount} 条，限制到 ${danmakuData.length} 条`);
         } else {
+          // 没有应用限制，不显示原始数量
           setDanmakuOriginalCount(0);
         }
 
@@ -4143,6 +4140,19 @@ function PlayPageClient() {
 
         setDanmakuCount(danmakuData.length);
         console.log(`[弹幕] 缓存加载成功，共 ${danmakuData.length} 条`);
+
+        // 更新当前选择状态（使用实时计算的数量）
+        if (cachedData.metadata) {
+          setCurrentDanmakuSelection({
+            animeId: cachedData.metadata.animeId || 0,
+            episodeId: cachedData.metadata.episodeId || 0,
+            animeTitle: cachedData.metadata.animeTitle || '',
+            episodeTitle: cachedData.metadata.episodeTitle || '',
+            searchKeyword: cachedData.metadata.searchKeyword,
+            danmakuCount: danmakuData.length,
+            danmakuOriginalCount: calculatedOriginalCount > 0 ? calculatedOriginalCount : undefined,
+          });
+        }
 
         // 延迟一下让用户看到弹幕数量
         await new Promise((resolve) => setTimeout(resolve, 1500));
